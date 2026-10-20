@@ -1,0 +1,208 @@
+# Ragent 本地开发基础设施栈
+#
+# 一条命令拉起后端所需的全部外部依赖：
+#   docker compose -f resources/docker/local-stack.compose.yaml up -d
+#
+# 包含：
+#   - PostgreSQL 17 + pgvector   5432   库 ragent / postgres:postgres（首次启动自动执行建表与初始化数据）
+#   - Redis 7                    6379   密码 123456
+#   - MinIO (S3 兼容)            9000   API；9001 控制台；rustfsadmin / rustfsadmin
+#   - RocketMQ 5.2.0             9876   NameServer；8082 控制台
+#
+# 与 bootstrap/src/main/resources/application.yaml 的默认配置一一对应，无需改动配置即可连上。
+# 注意：RocketMQ 部分取自 resources/docker/rocketmq-stack-5.2.0.compose.yaml，保持一致。
+
+name: ragent-local
+
+services:
+  # ---------------------------------------------------------------- PostgreSQL
+  # 用 pgvector 官方镜像，已内置 vector 扩展，schema_pg.sql 里的 CREATE EXTENSION vector 可直接生效
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: ragent-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ragent
+      TZ: Asia/Shanghai
+      # 中文排序与编码，避免初始化数据写入报错
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - ragent-pg-data:/var/lib/postgresql/data
+      # 仅在数据卷为空（首次启动）时按文件名顺序执行，之后重启不会重复执行
+      - ../database/schema_pg.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ../database/init_data_pg.sql:/docker-entrypoint-initdb.d/02_init_data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ragent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------- Redis
+  # application.yaml 里配了密码 123456，这里必须一致
+  redis:
+    image: redis:7.4-alpine
+    container_name: ragent-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--requirepass", "123456", "--appendonly", "yes"]
+    volumes:
+      - ragent-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "123456", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------- MinIO
+  # 对象存储，对应 rag.storage.type=s3。账号沿用配置里的 rustfsadmin / rustfsadmin
+  minio:
+    image: minio/minio:latest
+    container_name: ragent-minio
+    ports:
+      - "9000:9000"   # S3 API，应用连这个
+      - "9001:9001"   # Web 控制台
+    environment:
+      MINIO_ROOT_USER: rustfsadmin
+      MINIO_ROOT_PASSWORD: rustfsadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - ragent-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # 一次性任务：建好应用需要的两个桶后退出
+  # ragent-sources 私有（知识库原始文档）；ragent-assets 公共读（PDF 抽出的图片供前端直接预览）
+  minio-init:
+    image: minio/mc:latest
+    container_name: ragent-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mc alias set local http://minio:9000 rustfsadmin rustfsadmin
+        mc mb --ignore-existing local/ragent-sources
+        mc mb --ignore-existing local/ragent-assets
+        mc anonymous set download local/ragent-assets
+        echo "==> buckets ready: ragent-sources, ragent-assets"
+    restart: "no"
+
+  # ------------------------------------------------------------------ RocketMQ
+  rmqnamesrv:
+    image: apache/rocketmq:5.2.0
+    container_name: rmqnamesrv
+    ports:
+      - "9876:9876"
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx400m"
+    command: sh mqnamesrv
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'The Name Server boot success' /home/rocketmq/logs/rocketmqlogs/namesrv.log || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  rmqbroker:
+    image: apache/rocketmq:5.2.0
+    container_name: rmqbroker
+    ports:
+      - "10911:10911"
+      - "10909:10909"
+      - "10912:10912"
+      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"   # dashboard 端口也从这里暴露
+    environment:
+      NAMESRV_ADDR: "rmqnamesrv:9876"
+      JAVA_OPT_EXT: "-Xms512m -Xmx512m"
+    depends_on:
+      rmqnamesrv:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        cat > /home/rocketmq/rocketmq-5.2.0/conf/broker.conf << EOF
+        brokerClusterName = DefaultCluster
+        brokerName = broker-a
+        brokerId = 0
+        deleteWhen = 04
+        fileReservedTime = 48
+        brokerRole = ASYNC_MASTER
+        flushDiskType = ASYNC_FLUSH
+        brokerIP1 = 127.0.0.1
+        timerMaxDelaySec = 31622400
+        EOF
+        sh mqbroker --enable-proxy \
+          -c /home/rocketmq/rocketmq-5.2.0/conf/broker.conf
+    restart: unless-stopped
+
+  # 控制台：http://localhost:8082
+  # 与 broker 共享网络栈（brokerIP1=127.0.0.1 的前提）
+  rmqdashboard:
+    image: apacherocketmq/rocketmq-dashboard:2.1.0
+    container_name: rocketmq-dashboard
+    network_mode: "service:rmqbroker"
+    environment:
+      JAVA_OPTS: >-
+        -Xms256m -Xmx512m
+        -XX:MaxMetaspaceSize=256m
+        -Drocketmq.config.enableDashBoardCollect=false
+        -Drocketmq.namesrv.addr=rmqnamesrv:9876
+        -Dserver.port=8082
+    depends_on:
+      rmqbroker:
+        condition: service_started
+    restart: unless-stopped
+
+  # ------------------------------------------------------------- Elasticsearch
+  # 关键词检索通道的后端。用途：补齐向量检索对「专有名词 / 精确匹配」的盲区
+  # 与向量通道同时召回，再由 RRF 融合 —— 单开向量通道时融合会被跳过，看不到效果
+  #
+  # 版本必须是 9.x：Spring Boot 4.1.0 的 BOM 管理 elasticsearch-java 客户端为 9.4.2，
+  # 客户端会带 compatible-with=9 请求头，8.x 服务端不认会直接返回 400
+  # （仓库里的 elasticsearch-8.17.sh 是旧版 Spring Boot 时代的产物，已不适用）
+  #
+  # 首次启动会自动安装 IK 中文分词插件（analysis-ik），之后复用数据卷不再重装
+  elasticsearch:
+    image: elasticsearch:9.2.0
+    container_name: ragent-es
+    ports:
+      # 宿主机端口用 9201：9200 被本机 cpolar 占用（内网穿透工具）
+      # 对应 application.yaml 里 rag.keyword.es.uris 也要写 9201
+      - "9201:9200"
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"   # 本地开发，关闭鉴权（配置里用的是 http）
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      TZ: Asia/Shanghai
+    volumes:
+      - ragent-es-data:/usr/share/elasticsearch/data
+      # 有插件才启动：装过就直接起，没装过先装再起
+      - ./es-entrypoint.sh:/es-entrypoint.sh:ro
+    entrypoint: ["/bin/bash", "/es-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  ragent-pg-data:
+  ragent-redis-data:
+  ragent-minio-data:
+  ragent-es-data:

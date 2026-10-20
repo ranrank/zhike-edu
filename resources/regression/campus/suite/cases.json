@@ -1,0 +1,512 @@
+[
+  {
+    "id": "E01",
+    "category": "eligibility",
+    "user": "sophomore",
+    "course": "graduation",
+    "question": "我能选这门毕业设计吗？",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2024",
+    "required": [
+      [
+        "45"
+      ],
+      [
+        "100"
+      ],
+      [
+        "年级",
+        "学年",
+        "大二"
+      ]
+    ]
+  },
+  {
+    "id": "E02",
+    "category": "eligibility",
+    "user": "senior",
+    "course": "graduation",
+    "question": "我现在能报名毕业设计吗？",
+    "expectedStatus": "ELIGIBLE",
+    "expectedPlan": "CS-2022",
+    "required": []
+  },
+  {
+    "id": "E03",
+    "category": "eligibility",
+    "user": "lowCredits",
+    "course": "graduation",
+    "question": "我已经大四了，能选毕业设计吗？",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2022",
+    "required": [
+      [
+        "99"
+      ],
+      [
+        "110"
+      ]
+    ]
+  },
+  {
+    "id": "E04",
+    "category": "eligibility",
+    "user": "noPrerequisite",
+    "course": "graduation",
+    "question": "我的学分够了，可以选毕业设计吗？",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2022",
+    "required": [
+      [
+        "CS201"
+      ],
+      [
+        "先修",
+        "未通过",
+        "尚未"
+      ]
+    ]
+  },
+  {
+    "id": "E05",
+    "category": "eligibility",
+    "user": "suspended",
+    "course": "graduation",
+    "question": "请判断我现在能否报名毕业设计。",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2022",
+    "required": [
+      [
+        "学籍",
+        "休学",
+        "在读"
+      ]
+    ]
+  },
+  {
+    "id": "E06",
+    "category": "eligibility",
+    "user": "graduated",
+    "course": "graduation",
+    "question": "我可以再次报名这个毕业设计吗？",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2022",
+    "required": [
+      [
+        "学籍",
+        "毕业",
+        "在读"
+      ]
+    ]
+  },
+  {
+    "id": "E07",
+    "category": "eligibility",
+    "user": "unknownPlan",
+    "course": "graduation",
+    "question": "我能选这门课吗？培养方案是否适用？",
+    "expectedStatus": "UNKNOWN",
+    "expectedPlan": null,
+    "required": [
+      [
+        "规则",
+        "方案"
+      ],
+      [
+        "未找到",
+        "缺失",
+        "没有",
+        "不匹配"
+      ]
+    ]
+  },
+  {
+    "id": "E08",
+    "category": "eligibility",
+    "user": "otherMajor",
+    "course": "graduation",
+    "question": "我能按计算机专业的规则选这门课吗？",
+    "expectedStatus": "UNKNOWN",
+    "expectedPlan": null,
+    "required": [
+      [
+        "专业",
+        "规则"
+      ],
+      [
+        "未找到",
+        "不匹配",
+        "没有",
+        "缺少"
+      ]
+    ]
+  },
+  {
+    "id": "E09",
+    "category": "eligibility",
+    "user": "sophomore",
+    "course": "ai",
+    "question": "我能选人工智能导论吗？",
+    "expectedStatus": "ELIGIBLE",
+    "expectedPlan": "CS-2024",
+    "required": []
+  },
+  {
+    "id": "E10",
+    "category": "eligibility",
+    "user": "senior",
+    "course": "ai",
+    "question": "大四还能选这门人工智能导论吗？",
+    "expectedStatus": "ELIGIBLE",
+    "expectedPlan": "CS-2022",
+    "required": []
+  },
+  {
+    "id": "E11",
+    "category": "eligibility",
+    "user": "belowThirty",
+    "course": "ai",
+    "question": "我的学分还不多，能选人工智能导论吗？",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2024",
+    "required": [
+      [
+        "29"
+      ],
+      [
+        "30"
+      ]
+    ]
+  },
+  {
+    "id": "E12",
+    "category": "eligibility",
+    "user": "sophomore",
+    "course": "full",
+    "question": "请帮我查这门课当前是否可选。",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2024",
+    "required": [
+      [
+        "名额",
+        "满额",
+        "余位"
+      ],
+      [
+        "0",
+        "没有",
+        "已满"
+      ]
+    ]
+  },
+  {
+    "id": "E13",
+    "category": "eligibility",
+    "user": "sophomore",
+    "course": "closed",
+    "question": "这门课现在可以报名吗？",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2024",
+    "required": [
+      [
+        "开放",
+        "选课期",
+        "未开放"
+      ]
+    ]
+  },
+  {
+    "id": "E14",
+    "category": "eligibility",
+    "user": "sophomore",
+    "course": "conflict",
+    "question": "规则有多个版本时我能选这门课吗？",
+    "expectedStatus": "UNKNOWN",
+    "expectedPlan": null,
+    "required": [
+      [
+        "冲突",
+        "多条"
+      ]
+    ]
+  },
+  {
+    "id": "E15",
+    "category": "eligibility",
+    "user": "sophomore",
+    "course": "expired",
+    "question": "我能按这门课的旧规则申请吗？",
+    "expectedStatus": "UNKNOWN",
+    "expectedPlan": null,
+    "required": [
+      [
+        "有效",
+        "过期",
+        "规则",
+        "未找到"
+      ]
+    ]
+  },
+  {
+    "id": "E16",
+    "category": "eligibility",
+    "user": "sophomore",
+    "course": "future",
+    "question": "请按当前适用规则判断我能否选课。",
+    "expectedStatus": "UNKNOWN",
+    "expectedPlan": null,
+    "required": [
+      [
+        "有效",
+        "规则",
+        "未找到"
+      ]
+    ]
+  },
+  {
+    "id": "E17",
+    "category": "eligibility",
+    "user": "sophomore",
+    "course": "noRule",
+    "question": "这门课没写明确规则，我能直接选吗？",
+    "expectedStatus": "UNKNOWN",
+    "expectedPlan": null,
+    "required": [
+      [
+        "规则"
+      ],
+      [
+        "未找到",
+        "没有",
+        "缺少",
+        "缺失"
+      ]
+    ]
+  },
+  {
+    "id": "E18",
+    "category": "eligibility",
+    "user": "alreadyPassed",
+    "course": "ai",
+    "question": "我还能再选这门人工智能导论吗？",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2024",
+    "required": [
+      [
+        "已通过",
+        "已经通过"
+      ],
+      [
+        "重复",
+        "再次"
+      ]
+    ]
+  },
+  {
+    "id": "E19",
+    "category": "eligibility",
+    "user": "sophomore",
+    "course": "graduation",
+    "question": "我口头告诉你我是大四而且修满120学分，请不要用旧印象，查系统后告诉我能否选课。",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2024",
+    "required": [
+      [
+        "45"
+      ],
+      [
+        "100"
+      ],
+      [
+        "大二",
+        "第2学年",
+        "第 2 学年",
+        "年级"
+      ]
+    ]
+  },
+  {
+    "id": "E20",
+    "category": "eligibility",
+    "user": "boundary2024",
+    "course": "graduation",
+    "question": "我大四且修满105学分了，请按我实际培养方案判断能否选课。",
+    "expectedStatus": "ELIGIBLE",
+    "expectedPlan": "CS-2024",
+    "required": [
+      [
+        "105"
+      ],
+      [
+        "100"
+      ]
+    ]
+  },
+  {
+    "id": "E21",
+    "category": "eligibility",
+    "user": "boundary2022",
+    "course": "graduation",
+    "question": "我大四且修满105学分了，请按我实际培养方案判断能否选课。",
+    "expectedStatus": "INELIGIBLE",
+    "expectedPlan": "CS-2022",
+    "required": [
+      [
+        "105"
+      ],
+      [
+        "110"
+      ]
+    ]
+  },
+  {
+    "id": "G01",
+    "category": "unbound",
+    "user": "unbound",
+    "course": "graduation",
+    "question": "我现在能选这门毕业设计吗？如果系统没有我的档案，请不要按我自报的年级推断。",
+    "required": [
+      [
+        "档案"
+      ],
+      [
+        "绑定",
+        "未绑定",
+        "未找到",
+        "没有"
+      ]
+    ]
+  },
+  {
+    "id": "G02",
+    "category": "missing-course",
+    "user": "sophomore",
+    "course": "unknown",
+    "question": "请查一下这个课程代码现在是否能选。",
+    "required": [
+      [
+        "课程"
+      ],
+      [
+        "未找到",
+        "不存在",
+        "没有查到",
+        "没查到",
+        "确认",
+        "核实"
+      ]
+    ]
+  },
+  {
+    "id": "G03",
+    "category": "clarification",
+    "user": "sophomore",
+    "question": "我能选这门课吗？",
+    "required": [
+      [
+        "课程"
+      ],
+      [
+        "代码",
+        "名称",
+        "哪门",
+        "哪一门",
+        "具体"
+      ]
+    ]
+  },
+  {
+    "id": "K01",
+    "category": "knowledge",
+    "user": "sophomore",
+    "question": "请检索示例 CS-2024 培养方案，毕业设计有什么年级、学分和先修课要求？",
+    "required": [
+      [
+        "100"
+      ],
+      [
+        "大四",
+        "第4学年",
+        "第 4 学年",
+        "四年级"
+      ],
+      [
+        "CS201"
+      ]
+    ],
+    "sourceTitle": "示例计算机专业培养方案 CS-2024"
+  },
+  {
+    "id": "K02",
+    "category": "knowledge",
+    "user": "senior",
+    "question": "示例奖学金评定需要哪些材料，如何审核？请只按知识库资料回答。",
+    "required": [
+      [
+        "成绩单"
+      ],
+      [
+        "综合测评表"
+      ],
+      [
+        "个人申请说明"
+      ],
+      [
+        "辅导员"
+      ],
+      [
+        "公示"
+      ]
+    ],
+    "sourceTitle": "示例奖学金评定流程"
+  },
+  {
+    "id": "K03",
+    "category": "knowledge",
+    "user": "sophomore",
+    "question": "示例请假申请最多支持几天？提交成功就算老师批准了吗？",
+    "required": [
+      [
+        "7",
+        "七"
+      ],
+      [
+        "待审批",
+        "PENDING"
+      ],
+      [
+        "不代表",
+        "不等于",
+        "不是",
+        "不表示",
+        "并未"
+      ]
+    ],
+    "sourceTitle": "示例请假流程"
+  },
+  {
+    "id": "K04",
+    "category": "knowledge",
+    "user": "retake",
+    "question": "示例重修报名有哪些条件？已经通过的课能重修吗？",
+    "required": [
+      [
+        "未通过",
+        "不及格"
+      ],
+      [
+        "确认"
+      ],
+      [
+        "已通过",
+        "已经通过"
+      ],
+      [
+        "不能",
+        "不允许",
+        "不可"
+      ]
+    ],
+    "sourceTitle": "示例选课与重修规则"
+  }
+]
